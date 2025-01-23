@@ -10,19 +10,26 @@
         - /system identity print
     register: system_identity
 
-
   - name: Gather facts
     community.routeros.facts:
 
   - name: Collect data for table
     set_fact:
-      device_data: "{{ device_data | default([]) + [{'ip': ansible_host, 'name': system_identity.stdout_lines[0]}] }}"
+      device_data: "{{ device_data | default([]) + [{'name': system_identity.stdout_lines[0], 'ip': ansible_host, 'mac': ansible_net_mac]}] }}"
 
-  - name: Display table of devices
-    debug:
-      msg: |
-        Devices Table:
+  - name: Write data to CSV file
+    copy:
+      dest: /tmp/router_data.csv
+      content: |
+        Name,IP Address,MAC Address
         {% for device in device_data %}
-        - IP: {{ device.ip }}, Name: {{ device.name }}
+        {{ device.name }},{{ device.ip }},{{ device.mac }}
         {% endfor %}
 
+  - name: Display CSV file content
+    debug:
+      msg: |
+        Generated CSV File:
+        {% for device in device_data %}
+        {{ device.name }},{{ device.ip }},{{ device.mac }}
+        {% endfor %}
